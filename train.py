@@ -20,6 +20,7 @@ def main():
     
     # add PROGRAM level args
     parser.add_argument('--pretrained_code', default='', type=str)
+    parser.add_argument('--dataset', default='stl10', type=str)
 
     # add all the available trainer options to argparse
     # ie: now --gpus --num_nodes ... --fast_dev_run all work in the cli
@@ -34,10 +35,14 @@ def main():
     # INITIALIZE DATAMODULE
     ###########################
     print("INITIALIZING DATAMODULE...")
-    dm = STL10DataModule(data_dir='./data', batch_size=128)
-    dm.train_dataloader = dm.train_dataloader_labeled
-    dm.val_dataloader = dm.val_dataloader_labeled
 
+    if args.dataset=='stl10':
+        dm = STL10DataModule(data_dir='./data', batch_size=128)
+        dm.train_dataloader = dm.train_dataloader_labeled
+        dm.val_dataloader = dm.val_dataloader_labeled
+    elif args.dataset=='cifar10':
+        dm = CIFAR10DataModule(data_dir='./data', batch_size=128)
+    
     ###########################r
     # LOAD PRETRAINED MODEL
     ###########################
@@ -64,6 +69,7 @@ def main():
     logdir = 'logs'
     logdir += datetime.now().strftime("/%m%d")
     logdir += '/finetuned'
+    logdir += '/{}'.format(args.dataset)
     logdir += '/{}epochs'.format(args.max_epochs)
     if pre_file is not None:
         logdir += '/' + args.pretrained_code
