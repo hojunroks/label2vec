@@ -135,3 +135,6 @@ data/
 # logs
 /logs
 /lightning_logs
+
+# sh files
+.sh
