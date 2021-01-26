@@ -128,3 +128,10 @@ dmypy.json
 # Pyre type checker
 .pyre/
 .vscode/settings.json
+
+# data
+data/
+
+# logs
+/logs
+/lightning_logs

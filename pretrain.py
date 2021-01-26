@@ -5,10 +5,13 @@ from pl_bolts.datamodules import CIFAR10DataModule, STL10DataModule
 from pl_bolts.models.self_supervised import BYOL
 from pl_bolts.models.self_supervised.simclr import SimCLREvalDataTransform, SimCLRTrainDataTransform
 import torch
-from torchvision import models, datasets
 from datetime import datetime
-from src.utils import get_file
+from torchvision import models
 from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_lightning.callbacks import ModelCheckpoint
+import random
+import string
+
 
 def main():
     print("START PROGRAM")
@@ -19,7 +22,7 @@ def main():
     parser = ArgumentParser()
     
     # add PROGRAM level args
-    parser.add_argument('--pretrained_code', default='', type=str)
+    parser.add_argument('--dataset', default='stl10', type=str)
 
     # add all the available trainer options to argparse
     # ie: now --gpus --num_nodes ... --fast_dev_run all work in the cli
@@ -34,28 +37,17 @@ def main():
     # INITIALIZE DATAMODULE
     ###########################
     print("INITIALIZING DATAMODULE...")
-    dm = STL10DataModule(data_dir='./data', batch_size=128)
-    dm.train_dataloader = dm.train_dataloader_labeled
-    dm.val_dataloader = dm.val_dataloader_labeled
-
+    if args.dataset=='stl10':
+        dm = STL10DataModule(data_dir='./data', batch_size=128)
+    elif args.dataset=='cifar10':
+        dm = CIFAR10DataModule(data_dir='./data')
+    
     ###########################r
-    # LOAD PRETRAINED MODEL
-    ###########################
-    print("LOADING PRETRAINED MODEL...")
-    pre_file = get_file(args.pretrained_code + '.ckpt')
-    fe = models.resnet18(pretrained=True)
-    if pre_file is not None:
-        byol = BYOL_Pre.load_from_checkpoint(pre_file)
-        fe.load_state_dict(byol.fe.state_dict())
-    
-    # fe = models.resnet18(pretrained=False)
-    
-    ###########################
     # INITIALIZE MODEL
     ###########################
     print("INITIALIZING MODEL...")
-    
-    model = Classifier(args, feature_extractor=fe)
+    model = BYOL_Pre(args)
+
 
     ###########################
     # INITIALIZE LOGGER
@@ -63,29 +55,36 @@ def main():
     print("INITIALIZING LOGGER...")
     logdir = 'logs'
     logdir += datetime.now().strftime("/%m%d")
-    logdir += '/finetuned'
+    logdir += '/byol'
+    logdir += '/{}'.format(args.dataset)
+    if args.pretrain:
+        logdir += '/pretrained'
     logdir += '/{}epochs'.format(args.max_epochs)
-    if pre_file is not None:
-        logdir += '/' + args.pretrained_code
-        logger = TensorBoardLogger(logdir, name='', version=args.pretrained_code)
-    else:
-        logdir += '/no_byol'
-        logger = TensorBoardLogger(logdir, name='')
-
+    code = ""
+    for i in range(4):
+        code += string.ascii_uppercase[random.randint(0,25)]
+    logger = TensorBoardLogger(logdir, name='', version=code)
 
 
     ###########################
     # TRAIN
     ###########################
     print("START TRAINING...")
-    trainer = pl.Trainer.from_argparse_args(args, logger=logger)
+    
+    checkpoint_callback = ModelCheckpoint(
+        monitor='val_loss',
+        dirpath=logger.log_dir+logger.name+"/",
+        filename='{epoch:02d}-{val_loss:.2f}',
+        save_top_k=1,
+        mode='min',
+    )
+
+    trainer = pl.Trainer.from_argparse_args(args, logger=logger, callbacks=[checkpoint_callback])
     trainer.fit(model, datamodule=dm)
 
-    if pre_file is not None:
-        trainer.save_checkpoint(logger.log_dir+args.pretrained_code+"_finetuned.ckpt")
-    else:
-        trainer.save_checkpoint(logger.log_dir+logger.name+"/"+logger.name+"resnet_finetuned.ckpt")
 
+    trainer.save_checkpoint(logger.log_dir+logger.name+"/"+code+".ckpt")
+    
     ###########################
     # TEST
     ###########################

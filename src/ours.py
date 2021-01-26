@@ -11,74 +11,23 @@ from byol_pytorch import BYOL
 from pl_bolts.optimizers.lars_scheduling import LARSWrapper
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 
-class BYOL_Pre(pl.LightningModule):
+class Ours(pl.LightningModule):
     #################################################################################
-    # The model used for pretraining an encoder using BYOL.
-    #################################################################################
-    def __init__(self, hparams, *args, **kwargs):
-        super().__init__()
-        self.hparams = hparams
-        self.fe = models.resnet18(pretrained=self.hparams.pretrain)
-        self.learner = BYOL(
-            self.fe,
-            image_size = 96,
-            hidden_layer = 'avgpool'
-        )
-
-    def forward(self, x):
-        return self.fe(x)
-
-    def training_step(self, batch, batch_index):
-        x, y = batch
-        loss = self.learner(x)
-        self.log('train_loss', loss, on_epoch=True)
-        
-        return loss
-
-    def on_train_batch_end(self, outputs, batch, batch_index, dataloader):
-        self.learner.update_moving_average()
-
-    def validation_step(self, batch, batch_index):
-        x, y = batch
-        loss = self.learner(x)
-        self.log('val_loss', loss, on_epoch=True)
-        
-        return loss
-
-    def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate, weight_decay=self.hparams.weight_decay)
-        optimizer = LARSWrapper(optimizer)
-        scheduler = LinearWarmupCosineAnnealingLR(
-            optimizer, warmup_epochs=self.hparams.warmup_epochs, max_epochs=self.hparams.max_epochs
-        )
-        return [optimizer], [scheduler]
-
-    @staticmethod
-    def add_model_specific_args(parent_parser):
-        parser = ArgumentParser(parents=[parent_parser], add_help=False)
-
-        # optim
-        parser.add_argument('--learning_rate', type=float, default=3e-4)
-        parser.add_argument('--weight_decay', type=float, default=1.5e-6)
-        parser.add_argument('--warmup_epochs', type=float, default=10)
-        parser.add_argument('--pretrain', type=bool, default=False)
-        return parser
-
-class Classifier(pl.LightningModule):
-    #################################################################################
-    # The main classifier. 
+    # The main classifier using different target coding.
     #################################################################################
     def __init__(self, hparams, *args, **kwargs):
         super().__init__()
         self.hparams = hparams
         self.model = kwargs['feature_extractor']
+        self.labels_mean = kwargs['target_code_mean']
+        self.labels_std = kwargs['target_code_std']
         # for name, param in self.model.named_parameters():
         #     if name not in ['fc.weight', 'fc.bias']:
         #         param.requires_grad = False
 
         # self.model.fc = nn.Linear(self.model.fc.in_features, 10)
         # self.fine_parameters = list(filter(lambda p: p.requires_grad, self.model.parameters()))
-        
+        self.cos = nn.CosineSimilarity()
 
     def forward(self, x):
         return self.model(x)
@@ -86,14 +35,15 @@ class Classifier(pl.LightningModule):
     def training_step(self, batch, batch_index):
         x, y = batch
         y_hat = self.forward(x)
-        loss = F.cross_entropy(y_hat, y)
+        
+        loss = nn.CosineSimilarity(y_hat, self.labels_avg[y])/self.labels_std[y]
         self.log('train_loss', loss, on_epoch=True)
         return loss
 
     def validation_step(self, batch, batch_index):
         x, y = batch
         y_hat = self.forward(x)
-        loss = F.cross_entropy(y_hat, y)
+        loss = nn.CosineSimilarity(y_hat, self.labels_avg[y])/self.labels_std[y]
         
         correct=y_hat.argmax(dim=1).eq(y).sum().item()
         total = len(y)
