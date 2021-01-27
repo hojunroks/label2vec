@@ -9,6 +9,8 @@ from torchvision import models, datasets
 from datetime import datetime
 from src.utils import get_file
 from pytorch_lightning.loggers import TensorBoardLogger
+import git
+from dm import CIFAR10Data
 
 def main():
     print("START PROGRAM")
@@ -21,13 +23,14 @@ def main():
     # add PROGRAM level args
     parser.add_argument('--pretrained_code', default='', type=str)
     parser.add_argument('--dataset', default='stl10', type=str)
+    parser.add_argument('--pretrained_resnet', default=False, type=bool)
 
     # add all the available trainer options to argparse
     # ie: now --gpus --num_nodes ... --fast_dev_run all work in the cli
     parser = pl.Trainer.add_argparse_args(parser)
 
     # add model specific args
-    parser = BYOL_Pre.add_model_specific_args(parser)
+    parser = Classifier.add_model_specific_args(parser)
 
     args = parser.parse_args()
 
@@ -41,17 +44,13 @@ def main():
         dm.train_dataloader = dm.train_dataloader_labeled
         dm.val_dataloader = dm.val_dataloader_labeled
     elif args.dataset=='cifar10':
-        dm = CIFAR10DataModule(data_dir='./data', batch_size=128)
+        dm = CIFAR10DataModule(data_dir='./data', batch_size=256, num_workers=8)
     
     ###########################r
     # LOAD PRETRAINED MODEL
     ###########################
     print("LOADING PRETRAINED MODEL...")
     pre_file = get_file(args.pretrained_code + '.ckpt')
-    fe = models.resnet18(pretrained=True)
-    if pre_file is not None:
-        byol = BYOL_Pre.load_from_checkpoint(pre_file)
-        fe.load_state_dict(byol.fe.state_dict())
     
     # fe = models.resnet18(pretrained=False)
     
@@ -59,8 +58,7 @@ def main():
     # INITIALIZE MODEL
     ###########################
     print("INITIALIZING MODEL...")
-    
-    model = Classifier(args, feature_extractor=fe)
+    model = Classifier(args)
 
     ###########################
     # INITIALIZE LOGGER
@@ -73,7 +71,7 @@ def main():
     logdir += '/{}epochs'.format(args.max_epochs)
     if pre_file is not None:
         logdir += '/' + args.pretrained_code
-        logger = TensorBoardLogger(logdir, name='', version=args.pretrained_code)
+        logger = TensorBoardLogger(logdir, name=args.pretrained_code)
     else:
         logdir += '/no_byol'
         logger = TensorBoardLogger(logdir, name='')
@@ -85,6 +83,10 @@ def main():
     ###########################
     print("START TRAINING...")
     trainer = pl.Trainer.from_argparse_args(args, logger=logger)
+    args.num_workers=8
+    args.batch_size=256
+    args.data_dir='./data'
+    dm = CIFAR10Data(args)
     trainer.fit(model, datamodule=dm)
 
     if pre_file is not None:
