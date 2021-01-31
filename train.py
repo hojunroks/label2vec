@@ -19,7 +19,7 @@ def main():
     # GIT
     #######################
     print("CONFIGURING GIT...")
-    savencommit(__file__)
+    repo = savencommit(__file__)
 
     #######################
     # PARSE ARGUMENTS
@@ -89,10 +89,11 @@ def main():
     # TRAIN
     ###########################
     print("START TRAINING...")
-    trainer = pl.Trainer.from_argparse_args(args, logger=logger)
     args.num_workers=8
     args.batch_size=256
     args.data_dir='./data'
+    args.commit = repo.head.commit
+    trainer = pl.Trainer.from_argparse_args(args, logger=logger)
     dm = CIFAR10Data(args)
     trainer.fit(model, datamodule=dm)
 
