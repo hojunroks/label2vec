@@ -1,10 +1,9 @@
 import os
 import git
 from git import Repo
+from pathlib import Path
 
-PROJ_ROOT = os.getcwd()
-
-savencommit(__file__)
+PROJ_ROOT = str(Path(__file__).parent.parent)
 
 def savencommit(file):
     file = os.path.abspath(file)
@@ -28,6 +27,7 @@ def savencommit(file):
         repo.git.commit('-m', commit_message, author='hojunroks@gmail.com')
         origin = repo.remote(name='origin')
         origin.push()
+    return repo
 
 
 def get_file(name, path='.'):
@@ -41,3 +41,5 @@ def get_file(name, path='.'):
         print("No match")
         return None
     return result[0]
+
+savencommit(__file__)
