@@ -83,14 +83,6 @@ class Classifier(pl.LightningModule):
             byol = BYOL_Pre.load_from_checkpoint(pre_file)
             self.model.load_state_dict(byol.fe.state_dict())
         
-        # self.model = kwargs['feature_extractor']
-        # self.model = models.resnet18(pretrained=False)
-        # for name, param in self.model.named_parameters():
-        #     if name not in ['fc.weight', 'fc.bias']:
-        #         param.requires_grad = False
-
-        # self.model.fc = nn.Linear(self.model.fc.in_features, 10)
-        # self.fine_parameters = list(filter(lambda p: p.requires_grad, self.model.parameters()))
         self.accuracy = Accuracy()
 
     def forward(self, x):
@@ -161,7 +153,7 @@ class Classifier(pl.LightningModule):
         pass
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-4, weight_decay=1e-6)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate, weight_decay=self.hparams.weight_decay)
         return optimizer
         # optimizer = torch.optim.SGD(
         #     self.model.parameters(),
@@ -183,7 +175,7 @@ class Classifier(pl.LightningModule):
     @staticmethod
     def add_model_specific_args(parent_parser):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
-        parser.add_argument("--learning_rate", type=float, default=1e-2)
+        parser.add_argument("--learning_rate", type=float, default=1e-4)
         parser.add_argument("--weight_decay", type=float, default=1e-2)
         
         return parser
