@@ -21,7 +21,7 @@ def savencommit(file):
 
     if file in [item.a_path for item in repo.head.commit.diff(None)]:        
         print("Changes in file {} automatically commited to git".format(file))
-        commit_message = input("Is there a commit message you would like? If not, a default message will be left\n>>>")
+        commit_message = input("Is there a commit message you would like? If not, a default message will be left\n>>> ")
         if commit_message=='':
             commit_message = 'Automatic commit for {}'.format(file)
         repo.git.commit('-m', commit_message, author='hojunroks@gmail.com')
