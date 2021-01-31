@@ -31,6 +31,7 @@ def main():
     parser.add_argument('--pretrained_code', default='', type=str)
     parser.add_argument('--dataset', default='stl10', type=str)
     parser.add_argument('--pretrained_resnet', default=False, type=bool)
+    parser.add_argument('--commit', default=repo.head.commit, type=str)
 
     # add all the available trainer options to argparse
     # ie: now --gpus --num_nodes ... --fast_dev_run all work in the cli
@@ -92,7 +93,6 @@ def main():
     args.num_workers=8
     args.batch_size=256
     args.data_dir='./data'
-    # logger.log_hyperparams({'commit': repo.head.commit})
     trainer = pl.Trainer.from_argparse_args(args, logger=logger)
     dm = CIFAR10Data(args)
     trainer.fit(model, datamodule=dm)
