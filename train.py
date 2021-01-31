@@ -92,7 +92,7 @@ def main():
     args.num_workers=8
     args.batch_size=256
     args.data_dir='./data'
-    args.commit = repo.head.commit
+    logger.log_hyperparams({'commit': repo.head.commit})
     trainer = pl.Trainer.from_argparse_args(args, logger=logger)
     dm = CIFAR10Data(args)
     trainer.fit(model, datamodule=dm)
