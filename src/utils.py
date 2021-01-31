@@ -13,7 +13,7 @@ def savencommit(file):
         return
     file = file.split(PROJ_ROOT+'/')[1]
     repo = Repo(PROJ_ROOT)
-    repo.git.pull()
+    # repo.git.pull()
     
     if file in repo.untracked_files or file in [item.a_path for item in repo.index.diff(None)]:
         repo.git.add(file)
