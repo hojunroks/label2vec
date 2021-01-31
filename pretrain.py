@@ -11,10 +11,18 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
 import random
 import string
-
+from src.utils import savencommit
 
 def main():
     print("START PROGRAM")
+    
+    #######################
+    # GIT
+    #######################
+    print("CONFIGURING GIT...")
+    savencommit(__file__)
+
+
     #######################
     # PARSE ARGUMENTS
     #######################

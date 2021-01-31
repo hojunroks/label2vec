@@ -7,13 +7,20 @@ from pl_bolts.models.self_supervised.simclr import SimCLREvalDataTransform, SimC
 import torch
 from torchvision import models, datasets
 from datetime import datetime
-from src.utils import get_file
+from src.utils import get_file, savencommit
 from pytorch_lightning.loggers import TensorBoardLogger
 import git
 from dm import CIFAR10Data
 
 def main():
     print("START PROGRAM")
+
+    #######################
+    # GIT
+    #######################
+    print("CONFIGURING GIT...")
+    savencommit(__file__)
+
     #######################
     # PARSE ARGUMENTS
     #######################

@@ -6,13 +6,15 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 from argparse import ArgumentParser
-from src.utils import get_file
+from src.utils import get_file, savencommit
 from torchvision import models
 from byol_pytorch import BYOL
 from pl_bolts.optimizers.lars_scheduling import LARSWrapper
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 from scheduler import WarmupCosineLR
 from pytorch_lightning.metrics import Accuracy
+
+savencommit(__file__)
 
 class BYOL_Pre(pl.LightningModule):
     #################################################################################

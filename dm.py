@@ -7,7 +7,9 @@ from torch.utils.data import DataLoader
 from torchvision import transforms as T
 from torchvision.datasets import CIFAR10
 from tqdm import tqdm
+from src.utils import savencommit
 
+savencommit(__file__)
 
 class CIFAR10Data(pl.LightningDataModule):
     def __init__(self, args):
