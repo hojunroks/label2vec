@@ -20,7 +20,7 @@ def main():
     # GIT
     #######################
     print("CONFIGURING GIT...")
-    savencommit(__file__)
+    repo = savencommit(__file__)
 
 
     #######################
@@ -31,6 +31,7 @@ def main():
     
     # add PROGRAM level args
     parser.add_argument('--dataset', default='stl10', type=str)
+    parser.add_argument('--commit', default=repo.head.commit, type=str)
 
     # add all the available trainer options to argparse
     # ie: now --gpus --num_nodes ... --fast_dev_run all work in the cli
