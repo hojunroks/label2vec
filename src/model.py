@@ -70,7 +70,7 @@ class BYOL_Pre(pl.LightningModule):
         parser.add_argument('--image_size', type=int, default=96)
         return parser
 
-# class Classifier(pl.LightningModule):
+class Classifier(pl.LightningModule):
     #################################################################################
     # The main classifier. 
     #################################################################################
