@@ -69,7 +69,7 @@ def main():
     model = models.resnet18(pretrained=args.pretrained_resnet)
     if pre_file is not None:
         args.image_size=32
-        byol = BYOL_Pre.load_from_checkpoint(pre_file)
+        byol = BYOL_Pre.load_from_checkpoint(pre_file, hparams=args)
         model.load_state_dict(byol.fe.state_dict())
     classifier = Classifier(args, model=model)
 
