@@ -97,7 +97,7 @@ def main():
     print("START TRAINING...")
     trainer = pl.Trainer.from_argparse_args(args, logger=logger)
     dm = CIFAR10Data(args)
-    classifier = CIFAR10MODULE(args)
+    classifier = CIFAR10Module(args)
     trainer.fit(classifier, datamodule=dm)
     if pre_file is not None:
         trainer.save_checkpoint(logger.log_dir+args.pretrained_code+"_finetuned.ckpt")
