@@ -71,7 +71,7 @@ def main():
         args.image_size=32
         args.pretrain=False
         byol = BYOL_Pre.load_from_checkpoint(pre_file, hparams=args)
-        model.load_state_dict(byol.fe.state_dict())
+        model.load_state_dict(byol.model.state_dict())
     classifier = Classifier(args, model=model)
 
     ###########################
