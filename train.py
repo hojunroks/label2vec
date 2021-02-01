@@ -66,12 +66,12 @@ def main():
     # INITIALIZE MODEL
     ###########################
     print("INITIALIZING MODEL...")
-    pre_file = get_file(args.pretrained_code + '.ckpt')
     model = models.resnet18(pretrained=args.pretrained_resnet)
     if pre_file is not None:
+        args.image_size=32
         byol = BYOL_Pre.load_from_checkpoint(pre_file)
         model.load_state_dict(byol.fe.state_dict())
-    classifier = Classifier(args)
+    classifier = Classifier(args, model=model)
 
     ###########################
     # INITIALIZE LOGGER
