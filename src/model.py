@@ -23,15 +23,15 @@ class BYOL_Pre(pl.LightningModule):
     def __init__(self, hparams, *args, **kwargs):
         super().__init__()
         self.hparams = hparams
-        self.fe = models.resnet18(pretrained=self.hparams.pretrain)
+        self.model = models.resnet18(pretrained=self.hparams.pretrain)
         self.learner = BYOL(
-            self.fe,
-            image_size = 96,
+            self.model,
+            image_size = hparams.image_size,
             hidden_layer = 'avgpool'
         )
 
     def forward(self, x):
-        return self.fe(x)
+        return self.model(x)
 
     def training_step(self, batch, batch_index):
         x, y = batch
@@ -67,22 +67,17 @@ class BYOL_Pre(pl.LightningModule):
         parser.add_argument('--weight_decay', type=float, default=1.5e-6)
         parser.add_argument('--warmup_epochs', type=float, default=10)
         parser.add_argument('--pretrain', type=bool, default=False)
+        parser.add_argument('--image_size', type=int, default=96)
         return parser
 
 class Classifier(pl.LightningModule):
     #################################################################################
     # The main classifier. 
     #################################################################################
-    def __init__(self, hparams, *args, **kwargs):
+    def __init__(self, hparams, model, *args, **kwargs):
         super().__init__()
         self.hparams = hparams
-
-        self.model = models.resnet18(pretrained=hparams.pretrained_resnet)
-        pre_file = get_file(hparams.pretrained_code + '.ckpt')
-        if pre_file is not None:
-            byol = BYOL_Pre.load_from_checkpoint(pre_file)
-            self.model.load_state_dict(byol.fe.state_dict())
-        
+        self.model = model
         self.accuracy = Accuracy()
 
     def forward(self, x):
@@ -110,28 +105,34 @@ class Classifier(pl.LightningModule):
         pass
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams.learning_rate, weight_decay=self.hparams.weight_decay)
-        return optimizer
-        # optimizer = torch.optim.SGD(
-        #     self.model.parameters(),
-        #     lr=self.hparams.learning_rate,
-        #     weight_decay=self.hparams.weight_decay,
-        #     momentum=0.9,
-        #     nesterov=True,
-        # )
-        # total_steps = self.hparams.max_epochs * len(self.train_dataloader())
-        # scheduler = {
-        #     "scheduler": WarmupCosineLR(
-        #         optimizer, warmup_epochs=total_steps * 0.3, max_epochs=total_steps
-        #     ),
-        #     "interval": "step",
-        #     "name": "learning_rate",
-        # }
-        # return [optimizer], [scheduler]
+        if self.hparams.optimizer == 'adam':
+            optimizer = torch.optim.Adam(
+                self.model.parameters(), 
+                lr=self.hparams.learning_rate, 
+                weight_decay=self.hparams.weight_decay
+            )
+        elif self.hparams.optimizer == 'sgd':
+            optimizer = torch.optim.SGD(
+                self.model.parameters(),
+                lr=self.hparams.learning_rate,
+                weight_decay=self.hparams.weight_decay,
+                momentum=0.9,
+                nesterov=True,
+            )
+        total_steps = self.hparams.max_epochs * len(self.train_dataloader())
+        scheduler = {
+            "scheduler": WarmupCosineLR(
+                optimizer, warmup_epochs=total_steps * 0.3, max_epochs=total_steps
+            ),
+            "interval": "step",
+            "name": "learning_rate",
+        }
+        return [optimizer], [scheduler]
 
     @staticmethod
     def add_model_specific_args(parent_parser):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
+        parser.add_argument("--optimizer", type=str, default='adam')
         parser.add_argument("--learning_rate", type=float, default=1e-4)
         parser.add_argument("--weight_decay", type=float, default=1e-2)
         
