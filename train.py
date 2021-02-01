@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from src.model import Classifier, BYOL_Pre
+from src.model import Classifier, BYOL_Pre, CIFAR10Module
 import pytorch_lightning as pl
 from pl_bolts.datamodules import CIFAR10DataModule, STL10DataModule
 from pl_bolts.models.self_supervised import BYOL
@@ -97,6 +97,7 @@ def main():
     print("START TRAINING...")
     trainer = pl.Trainer.from_argparse_args(args, logger=logger)
     dm = CIFAR10Data(args)
+    classifier = CIFAR10MODULE(args)
     trainer.fit(classifier, datamodule=dm)
     if pre_file is not None:
         trainer.save_checkpoint(logger.log_dir+args.pretrained_code+"_finetuned.ckpt")
