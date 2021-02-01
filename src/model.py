@@ -257,7 +257,7 @@ class Classifier(pl.LightningModule):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
         parser.add_argument("--learning_rate", type=float, default=1e-2)
         parser.add_argument("--weight_decay", type=float, default=1e-2)
-        
+        parser.add_argument("--optimizer", type=str, default='adam')        
         return parser
 
 
