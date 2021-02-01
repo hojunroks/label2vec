@@ -103,7 +103,7 @@ def main():
         log_every_n_steps=1
     )
     dm = CIFAR10Data(args)
-    classifier = CIFAR10Module(args)
+    # classifier = CIFAR10Module(args)
     trainer.fit(classifier, datamodule=dm
     )
     if pre_file is not None:
