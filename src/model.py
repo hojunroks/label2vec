@@ -77,7 +77,8 @@ class Classifier(pl.LightningModule):
     def __init__(self, hparams, model, *args, **kwargs):
         super().__init__()
         self.hparams = hparams
-        self.model = model
+
+        self.model = models.resnet18(pretrained=False)
         self.accuracy = Accuracy()
 
     def forward(self, x):
