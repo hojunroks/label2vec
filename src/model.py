@@ -23,9 +23,9 @@ class BYOL_Pre(pl.LightningModule):
     def __init__(self, hparams, *args, **kwargs):
         super().__init__()
         self.hparams = hparams
-        self.fe = models.resnet18(pretrained=self.hparams.pretrain)
+        self.model = models.resnet18(pretrained=self.hparams.pretrain)
         self.learner = BYOL(
-            self.fe,
+            self.model,
             image_size = hparams.image_size,
             hidden_layer = 'avgpool'
         )
