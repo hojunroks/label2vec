@@ -176,25 +176,25 @@ class CIFAR10Module(pl.LightningModule):
         self.log("acc/test", accuracy)
 
     def configure_optimizers(self):
-        # optimizer = torch.optim.Adam(
-        #         self.model.parameters(), 
-        #         lr=1e-4, 
-        #         weight_decay=1e-6
-        # )
-        # return optimizer
-        optimizer = torch.optim.SGD(
-            self.model.parameters(),
-            lr=self.hparams.learning_rate,
-            weight_decay=self.hparams.weight_decay,
-            momentum=0.9,
-            nesterov=True,
+        optimizer = torch.optim.Adam(
+                self.model.parameters(), 
+                lr=1e-3, 
+                weight_decay=1e-2
         )
-        total_steps = self.hparams.max_epochs * len(self.train_dataloader())
-        scheduler = {
-            "scheduler": WarmupCosineLR(
-                optimizer, warmup_epochs=total_steps * 0.3, max_epochs=total_steps
-            ),
-            "interval": "step",
-            "name": "learning_rate",
-        }
-        return [optimizer], [scheduler]
+        return optimizer
+        # optimizer = torch.optim.SGD(
+        #     self.model.parameters(),
+        #     lr=self.hparams.learning_rate,
+        #     weight_decay=self.hparams.weight_decay,
+        #     momentum=0.9,
+        #     nesterov=True,
+        # )
+        # total_steps = self.hparams.max_epochs * len(self.train_dataloader())
+        # scheduler = {
+        #     "scheduler": WarmupCosineLR(
+        #         optimizer, warmup_epochs=total_steps * 0.3, max_epochs=total_steps
+        #     ),
+        #     "interval": "step",
+        #     "name": "learning_rate",
+        # }
+        # return [optimizer], [scheduler]
