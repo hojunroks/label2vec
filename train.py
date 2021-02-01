@@ -66,7 +66,12 @@ def main():
     # INITIALIZE MODEL
     ###########################
     print("INITIALIZING MODEL...")
-    model = Classifier(args)
+    pre_file = get_file(args.pretrained_code + '.ckpt')
+    model = models.resnet18(pretrained=args.pretrained_resnet)
+    if pre_file is not None:
+        byol = BYOL_Pre.load_from_checkpoint(pre_file)
+        model.load_state_dict(byol.fe.state_dict())
+    classifier = Classifier(args)
 
     ###########################
     # INITIALIZE LOGGER
@@ -77,8 +82,8 @@ def main():
     logdir += '/finetuned'
     logdir += '/{}'.format(args.dataset)
     logdir += '/{}epochs'.format(args.max_epochs)
+    logdir += '/{}'.format(args.optimizer)
     if pre_file is not None:
-        logdir += '/' + args.pretrained_code
         logger = TensorBoardLogger(logdir, name=args.pretrained_code)
     else:
         logdir += '/no_byol'
@@ -92,7 +97,7 @@ def main():
     print("START TRAINING...")
     trainer = pl.Trainer.from_argparse_args(args, logger=logger)
     dm = CIFAR10Data(args)
-    trainer.fit(model, datamodule=dm)
+    trainer.fit(classifier, datamodule=dm)
     if pre_file is not None:
         trainer.save_checkpoint(logger.log_dir+args.pretrained_code+"_finetuned.ckpt")
     else:
