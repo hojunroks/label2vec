@@ -171,7 +171,10 @@ class Classifier_new(pl.LightningModule):
         y_hat = self.forward(x)
         loss = -torch.mean(self.criterion(y_hat, self.labels[y]))
         with torch.no_grad():
+            print("#############################", y_hat.shape)
             y_hats = y_hat.repeat(10,1)
+            print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$", y_hats.shape)
+            print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%", y.shape)
             accuracy = self.accuracy(torch.argmax(y_hats), y)
         self.log('loss/train', loss)
         self.log('acc/train', accuracy)
