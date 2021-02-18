@@ -223,54 +223,66 @@ class Identity(nn.Module):
     def forward(self, x):
         return x
 
-
-
-class CIFAR10Module(pl.LightningModule):
-    def __init__(self, hparams):
+class Classifier_new(pl.LightningModule):
+    #################################################################################
+    # The main classifier. 
+    #################################################################################
+    def __init__(self, model, labels, *args, **kwargs):
         super().__init__()
-        self.hparams = hparams
-
-        self.criterion = torch.nn.CrossEntropyLoss()
+        self.criterion = nn.CosineSimilarity()
+        self.model = model
+        self.labels = labels
         self.accuracy = Accuracy()
 
-        self.model = models.resnet18(pretrained=False)
+    def forward(self, x):
+        return self.model(x)
 
-    def forward(self, batch):
-        images, labels = batch
-        predictions = self.model(images)
-        loss = F.cross_entropy(predictions, labels)
-        accuracy = self.accuracy(predictions, labels)
-        return loss, accuracy
-
-    def training_step(self, batch, batch_nb):
-        loss, accuracy = self.forward(batch)
-        self.log("loss/train", loss)
-        self.log("acc/train", accuracy)
+    def training_step(self, batch, batch_index):
+        x, y = batch
+        y_hat = self.forward(x)
+        loss = -torch.mean(self.criterion(y_hat, self.labels[y]))
+        with torch.no_grad():
+            y_hats = y_hat.repeat(10,1)
+            accuracy = self.accuracy(torch.argmax(y_hats), y)
+        self.log('loss/train', loss)
+        self.log('acc/train', accuracy)
         return loss
 
-    def validation_step(self, batch, batch_nb):
-        loss, accuracy = self.forward(batch)
-        self.log("loss/val", loss)
-        self.log("acc/val", accuracy)
+    def validation_step(self, batch, batch_index):
+        x, y = batch
+        y_hat = self.forward(x)
+        loss = -torch.mean(self.criterion(y_hat, self.labels[y]))
+        with torch.no_grad():
+            print(self.criterion(y_hats, self.labels).shape)
+            accuracy = self.accuracy(torch.argmax(self.criterion(y_hats, self.labels)), y)
+        self.log('loss/train', loss)
+        self.log('acc/train', accuracy)
+        return loss
 
-    def test_step(self, batch, batch_nb):
-        loss, accuracy = self.forward(batch)
-        self.log("acc/test", accuracy)
+
+    def test_step(self, batch, batch_index):
+        pass
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(
+        return torch.optim.Adam(
                 self.model.parameters(), 
-                lr=1e-3, 
-                weight_decay=1e-2
-        )
-        return optimizer
-        # optimizer = torch.optim.SGD(
-        #     self.model.parameters(),
-        #     lr=self.hparams.learning_rate,
-        #     weight_decay=self.hparams.weight_decay,
-        #     momentum=0.9,
-        #     nesterov=True,
-        # )
+                lr=1e-3
+            )
+        # if self.hparams.optimizer == 'adam':
+        #     optimizer = torch.optim.Adam(
+        #         self.model.parameters(), 
+        #         lr=self.hparams.learning_rate, 
+        #         weight_decay=self.hparams.weight_decay
+        #     )
+        #     return optimizer
+        # elif self.hparams.optimizer == 'sgd':
+        #     optimizer = torch.optim.SGD(
+        #         self.model.parameters(),
+        #         lr=self.hparams.learning_rate,
+        #         weight_decay=self.hparams.weight_decay,
+        #         momentum=0.9,
+        #         nesterov=True,
+        #     )
         # total_steps = self.hparams.max_epochs * len(self.train_dataloader())
         # scheduler = {
         #     "scheduler": WarmupCosineLR(
@@ -280,3 +292,13 @@ class CIFAR10Module(pl.LightningModule):
         #     "name": "learning_rate",
         # }
         # return [optimizer], [scheduler]
+
+    # @staticmethod
+    # def add_model_specific_args(parent_parser):
+    #     parser = ArgumentParser(parents=[parent_parser], add_help=False)
+    #     parser.add_argument("--optimizer", type=str, default='adam')
+    #     parser.add_argument("--learning_rate", type=float, default=1e-4)
+    #     parser.add_argument("--weight_decay", type=float, default=1e-6)
+        
+    #     return parser
+        
