@@ -64,8 +64,8 @@ def main():
     # INITIALIZE MODEL
     ###########################
     print("INITIALIZING MODEL...")
-    # model = resnet18()['backbone']
-    model = resnet18()
+    model = resnet18()['backbone']
+    # model = resnet18()
     model.fc = Identity()
     classifier = Ours(args, model=model)
 
