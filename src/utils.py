@@ -15,18 +15,6 @@ def savencommit(file):
     repo = Repo(PROJ_ROOT)
     # repo.git.pull()
     
-    if file in repo.untracked_files or file in [item.a_path for item in repo.index.diff(None)]:
-        repo.git.add(file)
-        print("Changes unstaged in file {} automatically staged to git".format(file))
-
-    if file in [item.a_path for item in repo.head.commit.diff(None)]:        
-        print("Changes in file {} automatically commited to git".format(file))
-        commit_message = input("Is there a commit message you would like? If not, a default message will be left\n>>> ")
-        if commit_message=='':
-            commit_message = 'Automatic commit for {}'.format(file)
-        repo.git.commit('-m', commit_message, author='hojunroks@gmail.com')
-        origin = repo.remote(name='origin')
-        origin.push()
     return repo
 
 

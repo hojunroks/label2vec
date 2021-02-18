@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from argparse import ArgumentParser
 from src.utils import get_file, savencommit
+from src.losses import ours_loss, contrastive_loss
 from torchvision import models
 from byol_pytorch import BYOL
 from pl_bolts.optimizers.lars_scheduling import LARSWrapper
@@ -140,6 +141,87 @@ class Classifier(pl.LightningModule):
         
         return parser
         
+class Ours(pl.LightningModule):
+    def __init__(self, hparams, model):
+        super().__init__()
+        self.hparams = hparams
+
+        self.sim = nn.CosineSimilarity()
+        self.criterion = ours_loss(0.07)
+        self.criterion_c = contrastive_loss(0.07)
+
+        self.l2v = nn.Embedding(10,512)
+        self.model = model
+
+    def forward(self, batch):
+        dat, lab = batch
+        new_vector = self.l2v(torch.cuda.LongTensor([0,1,2,3,4,5,6,7,8,9], device=self.device))
+        lab_hat = self.model(dat)
+        loss1, acc = self.criterion_c(lab_hat, lab, new_vector)
+        loss2 = 10*self.criterion(lab_hat, lab, new_vector)
+        loss3 = 1-torch.mean(self.sim(lab_hat, new_vector[lab]))
+        return loss1, loss2, loss3, acc
+
+    def training_step(self, batch, batch_index):
+        loss1, loss2, loss3, acc = self.forward(batch)
+        loss = loss1+loss2+loss3
+        self.log("train/loss1", loss1)
+        self.log("train/loss2", loss2)
+        self.log("train/loss3", loss3)
+        self.log("train/loss_total", loss)
+        self.log("train/accuracy", acc)
+        return loss
+    
+    def validation_step(self, batch, batch_index):
+        loss1, loss2, loss3, acc = self.forward(batch)
+        loss = loss1+loss2+loss3
+        self.log("val/loss1", loss1)
+        self.log("val/loss2", loss2)
+        self.log("val/loss3", loss3)
+        self.log("val/loss_total", loss)
+        self.log("val/accuracy", acc)
+        
+    def test_step(self, batch, batch_index):
+        loss1, loss2, loss3, acc = self.forward(batch)
+        self.log("test/accuracy", acc)
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.SGD(
+            list(self.model.parameters())+list(self.l2v.parameters()),
+            lr=self.hparams.learning_rate,
+            weight_decay=self.hparams.weight_decay,
+            momentum=0.9,
+            nesterov=True,
+        )
+        if self.hparams.scheduler:
+            total_steps = self.hparams.max_epochs * len(self.train_dataloader())
+            scheduler = {
+                "scheduler": WarmupCosineLR(
+                    optimizer, warmup_epochs=total_steps * 0.3, max_epochs=total_steps
+                ),
+                "interval": "step",
+                "name": "learning_rate",
+            }
+            return [optimizer], [scheduler]
+        else:
+            return optimizer
+
+    @staticmethod
+    def add_model_specific_args(parent_parser):
+        parser = ArgumentParser(parents=[parent_parser], add_help=False)
+        parser.add_argument("--scheduler", type=int, default=1)
+        parser.add_argument("--learning_rate", type=float, default=1e-2)
+        parser.add_argument("--weight_decay", type=float, default=1e-2)
+        
+        return parser
+
+
+class Identity(nn.Module):
+    def __init__(self):
+        super(Identity, self).__init__()
+        
+    def forward(self, x):
+        return x
 
 
 
