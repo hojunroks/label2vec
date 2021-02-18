@@ -166,10 +166,10 @@ class Ours(pl.LightningModule):
         loss1, loss2, loss3, acc = self.forward(batch)
         loss = loss1
 
-        if self.loss_ours:
+        if self.hparams.loss_ours:
             loss += loss2
             
-        if self.loss_sim:
+        if self.hparams.loss_sim:
             loss += loss3
 
         self.log("train/loss1", loss1)
@@ -183,10 +183,10 @@ class Ours(pl.LightningModule):
         loss1, loss2, loss3, acc = self.forward(batch)
         loss = loss1
 
-        if self.loss_ours:
+        if self.hparams.loss_ours:
             loss += loss2
             
-        if self.loss_sim:
+        if self.hparams.loss_sim:
             loss += loss3
             
 
