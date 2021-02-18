@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from src.model import Classifier, BYOL_Pre, CIFAR10Module, Ours, Identity
+from src.model import Classifier, BYOL_Pre, Ours, Identity
 import pytorch_lightning as pl
 from pl_bolts.datamodules import CIFAR10DataModule, STL10DataModule
 from pl_bolts.models.self_supervised import BYOL
