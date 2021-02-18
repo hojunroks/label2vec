@@ -164,7 +164,14 @@ class Ours(pl.LightningModule):
 
     def training_step(self, batch, batch_index):
         loss1, loss2, loss3, acc = self.forward(batch)
-        loss = loss1+loss2+loss3
+        loss = loss1
+
+        if self.loss_ours:
+            loss += loss2
+            
+        if self.loss_sim:
+            loss += loss3
+
         self.log("train/loss1", loss1)
         self.log("train/loss2", loss2)
         self.log("train/loss3", loss3)
@@ -174,7 +181,15 @@ class Ours(pl.LightningModule):
     
     def validation_step(self, batch, batch_index):
         loss1, loss2, loss3, acc = self.forward(batch)
-        loss = loss1+loss2+loss3
+        loss = loss1
+
+        if self.loss_ours:
+            loss += loss2
+            
+        if self.loss_sim:
+            loss += loss3
+            
+
         self.log("val/loss1", loss1)
         self.log("val/loss2", loss2)
         self.log("val/loss3", loss3)
@@ -210,6 +225,8 @@ class Ours(pl.LightningModule):
     def add_model_specific_args(parent_parser):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
         parser.add_argument("--scheduler", type=int, default=1)
+        parser.add_argument("--loss_ours", type=int, default=0)
+        parser.add_argument("--loss_sim", type=int, default=0)
         parser.add_argument("--learning_rate", type=float, default=1e-2)
         parser.add_argument("--weight_decay", type=float, default=1e-2)
         
