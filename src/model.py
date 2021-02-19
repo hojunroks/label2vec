@@ -150,7 +150,7 @@ class Ours(pl.LightningModule):
         self.criterion = ours_loss(0.07)
         self.criterion_c = contrastive_loss(0.07)
 
-        self.l2v = nn.Embedding(10,512)
+        self.l2v = nn.Embedding(10,2048)
         self.model = model
 
     def forward(self, batch):

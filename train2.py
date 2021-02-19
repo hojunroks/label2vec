@@ -8,7 +8,7 @@ import torch
 from torchvision import models, datasets
 from datetime import datetime
 from src.utils import get_file, savencommit
-from src.resnet import resnet18
+from src.resnet import resnet18, resnet50
 from pytorch_lightning.loggers import TensorBoardLogger
 import git
 from dm import CIFAR10Data
@@ -65,7 +65,8 @@ def main():
     ###########################
     print("INITIALIZING MODEL...")
     # model = resnet18()['backbone']
-    model = resnet18()
+    # model = resnet18()
+    model = resnet50()
     model.fc = Identity()
     classifier = Ours(args, model=model)
 
