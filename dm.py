@@ -5,7 +5,7 @@ import pytorch_lightning as pl
 import requests
 from torch.utils.data import DataLoader
 from torchvision import transforms as T
-from torchvision.datasets import CIFAR10
+from torchvision.datasets import CIFAR10, CIFAR100
 from tqdm import tqdm
 from src.utils import savencommit
 
@@ -78,6 +78,57 @@ class CIFAR10Data(pl.LightningDataModule):
             ]
         )
         dataset = CIFAR10(root=self.hparams.data_dir, train=False, transform=transform)
+        dataloader = DataLoader(
+            dataset,
+            batch_size=self.hparams.batch_size,
+            num_workers=self.hparams.num_workers,
+            drop_last=True,
+            pin_memory=True,
+        )
+        return dataloader
+
+    def test_dataloader(self):
+        return self.val_dataloader()
+
+
+class CIFAR100Data(pl.LightningDataModule):
+    def __init__(self, args):
+        super().__init__()
+        self.hparams = args
+        self.hparams.data_dir = './data'
+        self.hparams.batch_size = 256
+        self.hparams.num_workers = 8
+        self.mean = (0.5071, 0.4867, 0.4408)
+        self.std = (0.2675, 0.2565, 0.2761)
+
+    def train_dataloader(self):
+        transform = T.Compose(
+            [
+                T.RandomCrop(32, padding=4),
+                T.RandomHorizontalFlip(),
+                T.ToTensor(),
+                T.Normalize(self.mean, self.std),
+            ]
+        )
+        dataset = CIFAR100(root=self.hparams.data_dir, train=True, transform=transform)
+        dataloader = DataLoader(
+            dataset,
+            batch_size=self.hparams.batch_size,
+            num_workers=self.hparams.num_workers,
+            shuffle=True,
+            drop_last=True,
+            pin_memory=True,
+        )
+        return dataloader
+
+    def val_dataloader(self):
+        transform = T.Compose(
+            [
+                T.ToTensor(),
+                T.Normalize(self.mean, self.std),
+            ]
+        )
+        dataset = CIFAR100(root=self.hparams.data_dir, train=False, transform=transform)
         dataloader = DataLoader(
             dataset,
             batch_size=self.hparams.batch_size,

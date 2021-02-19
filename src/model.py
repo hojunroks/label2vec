@@ -150,12 +150,12 @@ class Ours(pl.LightningModule):
         self.criterion = ours_loss(0.07)
         self.criterion_c = contrastive_loss(0.07)
 
-        self.l2v = nn.Embedding(10,2048)
+        self.l2v = nn.Embedding(100, 2048)
         self.model = model
 
     def forward(self, batch):
         dat, lab = batch
-        new_vector = self.l2v(torch.cuda.LongTensor([0,1,2,3,4,5,6,7,8,9], device=self.device))
+        new_vector = self.l2v(torch.arange(100, dtype=torch.int64, device=self.device))
         lab_hat = self.model(dat)
         loss1, acc = self.criterion_c(lab_hat, lab, new_vector)
         loss2 = 10*self.criterion(lab_hat, lab, new_vector)

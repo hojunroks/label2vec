@@ -6,9 +6,10 @@ def ours_loss(temp):
     sim_f = nn.CosineSimilarity(1)
     def criterion_(feature_batch, label_batch, vectors):
         batch_size, feature_size = feature_batch.shape
-        tiled_f = feature_batch.repeat(1,10).view(batch_size, -1, feature_size) # 256 * 10 * 512
-        tiled_l = vectors[label_batch].repeat(1,10).view(batch_size, -1, feature_size) # 256 * 10 * 512
         class_num, feature_size = vectors.shape
+        tiled_f = feature_batch.repeat(1,class_num).view(batch_size, -1, feature_size) # 256 * 10 * 512
+        tiled_l = vectors[label_batch].repeat(1,class_num).view(batch_size, -1, feature_size) # 256 * 10 * 512
+        
         tiled_v = vectors.repeat(batch_size, 1).view(batch_size, class_num, feature_size) # 256 * 10 * 512
         tiled_sim_f = sim_(tiled_f, tiled_v) # 256 * 10
         tiled_sim_l = sim_(tiled_l, tiled_v) # 256 * 10
@@ -24,8 +25,8 @@ def contrastive_loss(temp):
     sim_ = nn.CosineSimilarity(2)
     def criterion_(feature_batch, label_batch, vectors):
         batch_size, feature_size = feature_batch.shape
-        tiled_f = feature_batch.repeat(1,10).view(batch_size, -1, feature_size) # 256 * 10 * 512
         class_num, feature_size = vectors.shape
+        tiled_f = feature_batch.repeat(1,class_num).view(batch_size, -1, feature_size) # 256 * 10 * 512
         tiled_v = vectors.repeat(batch_size, 1).view(batch_size, class_num, feature_size)
         tiled_sim = sim_(tiled_f, tiled_v)
         e_sims = torch.exp(tiled_sim/temp) # 256 * 10

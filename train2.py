@@ -11,7 +11,7 @@ from src.utils import get_file, savencommit
 from src.resnet import resnet18, resnet50
 from pytorch_lightning.loggers import TensorBoardLogger
 import git
-from dm import CIFAR10Data
+from dm import CIFAR10Data, CIFAR100Data
 
 def main():
     print("START PROGRAM")
@@ -29,7 +29,7 @@ def main():
     parser = ArgumentParser()
     
     # add PROGRAM level args
-    # parser.add_argument('--commit', default=repo.head.commit, type=str)
+    parser.add_argument('--dataset', default='cifar100', type=str)
 
     # add all the available trainer options to argparse
     # ie: now --gpus --num_nodes ... --fast_dev_run all work in the cli
@@ -77,7 +77,7 @@ def main():
     logdir = 'logs_ours'
     logdir += datetime.now().strftime("/%m%d")
     logdir += '/ours'
-    # logdir += '/{}'.format(args.dataset)
+    logdir += '/{}'.format(args.dataset)
     logdir += '/{}epochs'.format(args.max_epochs)
     logger = TensorBoardLogger(logdir, name='')
 
@@ -93,10 +93,7 @@ def main():
         weights_summary=None,
         log_every_n_steps=1
     )
-    args.data_dir = './data'
-    args.batch_size = 512
-    args.num_workers = 8
-    dm = CIFAR10Data(args)
+    dm = CIFAR100Data(args)
     # classifier = CIFAR10Module(args)
     trainer.fit(classifier, datamodule=dm)
     trainer.save_checkpoint(logger.log_dir+"_done.ckpt")
