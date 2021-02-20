@@ -30,6 +30,7 @@ def main():
     
     # add PROGRAM level args
     parser.add_argument('--dataset', default='cifar100', type=str)
+    parser.add_argument('--gpu', default='0', type=str)
 
     # add all the available trainer options to argparse
     # ie: now --gpus --num_nodes ... --fast_dev_run all work in the cli
@@ -91,7 +92,8 @@ def main():
         fast_dev_run=False,
         deterministic=True,
         weights_summary=None,
-        log_every_n_steps=1
+        log_every_n_steps=1,
+        gpus=args.gpu
     )
     dm = CIFAR100Data(args)
     # classifier = CIFAR10Module(args)
